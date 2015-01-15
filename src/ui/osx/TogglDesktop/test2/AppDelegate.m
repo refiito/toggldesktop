@@ -27,7 +27,6 @@
 #import "Utils.h"
 #import "Settings.h"
 #import "DisplayCommand.h"
-#import "Sparkle.h"
 
 @interface AppDelegate ()
 @property (nonatomic, strong) IBOutlet MainWindowController *mainWindowController;
@@ -86,18 +85,6 @@ void *ctx;
 	self.lastKnownOnlineState = YES;
 	self.lastKnownUserID = 0;
 	self.showMenuBarTimer = NO;
-
-	if ([self updateCheckEnabled])
-	{
-		[[SUUpdater sharedUpdater] setAutomaticallyDownloadsUpdates:YES];
-
-		NSAssert(ctx, @"ctx is not initialized, cannot continue");
-		char *str = toggl_get_update_channel(ctx);
-		NSAssert(str, @"Could not read update channel value");
-		NSString *channel = [NSString stringWithUTF8String:str];
-		free(str);
-		[Utils setUpdaterChannel:channel];
-	}
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -237,19 +224,6 @@ void *ctx;
 
 	self.reach = [Reachability reachabilityForInternetConnection];
 	[self.reach startNotifier];
-
-	if ([self updateCheckEnabled])
-	{
-		[[SUUpdater sharedUpdater] setDelegate:self.aboutWindowController];
-		[[SUUpdater sharedUpdater] checkForUpdatesInBackground];
-	}
-}
-
-- (BOOL)updateCheckEnabled
-{
-	NSDictionary *infoDict = [[NSBundle mainBundle] infoDictionary];
-
-	return [infoDict[@"KopsikCheckForUpdates"] boolValue];
 }
 
 - (BOOL)userNotificationCenter:(NSUserNotificationCenter *)center
