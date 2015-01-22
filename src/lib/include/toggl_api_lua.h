@@ -24,6 +24,12 @@ static int l_toggl_set_environment(lua_State *L) {
     return 0;
 }
 
+static int l_toggl_set_test_code(lua_State *L) {
+    toggl_set_test_code(app,
+                        lua_tointeger(L, 1));
+    return 0;
+}
+
 static int l_toggl_disable_update_check(lua_State *L) {
     toggl_disable_update_check(app);
     return 0;
@@ -488,6 +494,7 @@ static const struct luaL_Reg toggl_f[] = {
         l_toggl_format_tracked_time_duration
     },
     {"debug", l_toggl_debug},
+    {"set_test_code", l_toggl_set_test_code},
     {NULL, NULL}
 };
 

@@ -5,30 +5,59 @@
 
 #include <string>
 #include <vector>
-#include <set>
 
 #include "./proxy.h"
 #include "./types.h"
 
-#include "Poco/Timestamp.h"
+#include "Poco/Activity.h"
 
 namespace Poco {
-class Mutex;
+class Logger;
+namespace Util {
+}
 }
 
 namespace toggl {
 
 class ServerStatus {
  public:
-    ServerStatus();
-    virtual ~ServerStatus();
-    void SetGone(const std::string host, const bool value);
-    bool Gone(const std::string host);
+    ServerStatus()
+        : gone_(false)
+    , checker_(this, &ServerStatus::runActivity)
+    , fast_retry_(true)
+    , test_code_(0) {}
+
+    virtual ~ServerStatus() {
+        stopStatusCheck();
+    }
+
+    error Status();
+    error UpdateStatus(const int status_code);
+    void SetTestCode(const Poco::Int64 code) {
+        test_code_ = code;
+    }
+
+ protected:
+    void runActivity();
 
  private:
-    std::set<std::string> gone_;
-    Poco::Timestamp next_try_at_;
-    Poco::Mutex *m_;
+    bool gone_;
+    Poco::Mutex gone_m_;
+
+    Poco::Activity<ServerStatus> checker_;
+    Poco::Mutex checker_m_;
+    bool fast_retry_;
+
+    Poco::Int64 test_code_;
+
+    void setGone(const bool value);
+    bool gone();
+
+    void startStatusCheck(const bool fast_retry);
+    void stopStatusCheck();
+    bool checkingStatus();
+
+    Poco::Logger &logger() const;
 };
 
 class HTTPSClientConfig {
@@ -75,10 +104,9 @@ class HTTPSClient {
         std::string *response_body);
 
     static HTTPSClientConfig Config;
-    static ServerStatus BackendStatus;
 
- private:
-    error request(
+ protected:
+    virtual error request(
         const std::string method,
         const std::string host,
         const std::string relative_url,
@@ -87,15 +115,27 @@ class HTTPSClient {
         const std::string basic_auth_password,
         std::string *response_body,
         int *response_status);
+};
 
-    error requestJSON(
+class TogglClient : public HTTPSClient {
+ public:
+    static void SetTestCode(const Poco::Int64 status_code) {
+        toggl_status_.SetTestCode(status_code);
+    }
+
+ protected:
+    virtual error request(
         const std::string method,
         const std::string host,
         const std::string relative_url,
         const std::string json,
         const std::string basic_auth_username,
         const std::string basic_auth_password,
-        std::string *response_body);
+        std::string *response_body,
+        int *response_status);
+
+ private:
+    static ServerStatus toggl_status_;
 };
 
 }  // namespace toggl

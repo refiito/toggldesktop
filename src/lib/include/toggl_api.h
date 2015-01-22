@@ -555,6 +555,11 @@ extern "C" {
         const int view_item_size,
         const int settings_size);
 
+    // For testing only, allows to set HTTP client response code
+    TOGGL_EXPORT void toggl_set_test_code(
+        void *context,
+        const int64_t value);
+
 #undef TOGGL_EXPORT
 
 #ifdef __cplusplus

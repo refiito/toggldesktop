@@ -786,3 +786,9 @@ void toggl_set_idle_seconds(
     const uint64_t idle_seconds) {
     app(context)->SetIdleSeconds(idle_seconds);
 }
+
+void toggl_set_test_code(
+    void *context,
+    const int64_t value) {
+    toggl::TogglClient::SetTestCode(value);
+}
